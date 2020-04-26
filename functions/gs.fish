@@ -123,12 +123,14 @@ function __format_status -a message name -d "foramt the output of the status"
     echo (printf "%s %15s$colon %s %s" (set_color $current_color)$hash $message (set_color normal)"/idx/" (set_color $current_color)$name)
 end
 
-function __print_status -a st i padding -d "prints the status"ß
+function __print_status -a st i padding -d "prints the status"
+    set arr $arr (echo (echo $st | string split "/idx/")[2] | string trim | string replace -r -a '\e\[[^m]*m' '' | string split " -> ")[-1]
     printf (string replace "/idx/" (printf "%"$padding"s" [$i]) $st)\n
 end
 
 function __print -d "print output to screen"
-    set idx_padding (math 2 + (count (string split '' (count $arr))))
+    set length (count $staged $unmerged $unstaged $untracked $ignored)
+    set idx_padding (math 2 + (count (string split '' $length )))
     set states staged unmerged unstaged untracked ignored
 
     __print_branch
@@ -140,6 +142,10 @@ function __print -d "print output to screen"
             __print_status $st $i $idx_padding
             set i (math $i + 1)
         end
+    end
+
+    if test $length -eq 0
+        echo (set_color black)"$hash"(set_color normal)" nothing to commit, working tree clean"
     end
 
     echo (set_color black)"$hash"
@@ -179,7 +185,6 @@ function __gs -a flags -d "group statuses by state and print to screen"
         end
     end
 
-    set arr $staged $unmerged $unstaged $untracked $ignored
     __print
 end
 
